@@ -18,11 +18,10 @@ const allowedOrigins = new Set([
   'http://localhost:5174',
   ...configuredOrigins,
 ])
-console.log('CORS allowed origins:', [...allowedOrigins])
 
 const corsOptions = {
   origin(origin, callback) {
-    if (!origin || allowedOrigins.has(origin)) {
+    if (origin === undefined || allowedOrigins.has(origin)) {
       callback(null, true)
       return
     }
