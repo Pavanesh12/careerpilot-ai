@@ -9,14 +9,13 @@ import resumeRoutes from './routes/resume.routes.js'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js'
 
 const app = express()
-const configuredOrigins = (process.env.CLIENT_URL || '')
+const configuredOrigins = String(process.env.CLIENT_URL || '')
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean)
 const allowedOrigins = new Set([
   'http://localhost:5173',
   'http://localhost:5174',
-  'https://careerpilot-ai-n5f2gn27-pavanesh-prabhu-v-s-projects.vercel.app',
   ...configuredOrigins,
 ])
 
