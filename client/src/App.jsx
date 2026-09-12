@@ -1,29 +1,149 @@
 import './App.css'
+import { useEffect, useState } from 'react'
+import API_URL from './config/api.js'
+import SiteNav from './components/SiteNav.jsx'
+import AdminJobs from './pages/AdminJobs.jsx'
+import AdminDashboard from './pages/AdminDashboard.jsx'
+import Applications from './pages/Applications.jsx'
+import ApplicationForm from './pages/ApplicationForm.jsx'
+import AdminApplications from './pages/AdminApplications.jsx'
+import Auth from './pages/Auth.jsx'
+import JobMatches from './pages/JobMatches.jsx'
+import Jobs from './pages/Jobs.jsx'
+import MyResumes from './pages/MyResumes.jsx'
+import Profile from './pages/Profile.jsx'
+import ResumeBuilder from './ResumeBuilder.jsx'
 
 function App() {
-  return (
-    <main className="app-shell">
-      <nav className="site-nav" aria-label="Main navigation">
-        <a className="brand" href="#home">ResumeMatch</a>
-        <div className="nav-links">
-          <a href="#home">Home</a>
-          <a href="#resume-builder">Resume Builder</a>
-          <a href="#jobs">Jobs</a>
-          <a href="#applications">Applications</a>
-          <a className="nav-login" href="#login">Login</a>
-        </div>
-      </nav>
+  const [pathname, setPathname] = useState(window.location.pathname)
+  const [isAdmin, setIsAdmin] = useState(false)
 
-      <section className="hero-section" id="home">
-        <p className="eyebrow">AI Resume Builder &amp; Job Matching Platform</p>
-        <h1>AI Resume Builder &amp; Job Matching Platform</h1>
-        <p className="intro">
-          Create a professional resume, improve your resume with AI, and
-          discover job opportunities that match your skills.
-        </p>
-        <div className="status-card" role="status">
-          <span className="status-dot" aria-hidden="true" />
-          <span>Build your career with confidence</span>
+  useEffect(() => {
+    function updatePath() {
+      setPathname(window.location.pathname)
+    }
+
+    function handleInternalLink(event) {
+      const link = event.target.closest('a')
+      if (!link || link.target === '_blank' || link.hasAttribute('download')) return
+
+      const url = new URL(link.href, window.location.origin)
+      if (url.origin !== window.location.origin) return
+
+      event.preventDefault()
+      window.history.pushState({}, '', `${url.pathname}${url.search}${url.hash}`)
+      updatePath()
+    }
+
+    window.addEventListener('popstate', updatePath)
+    document.addEventListener('click', handleInternalLink, true)
+    return () => {
+      window.removeEventListener('popstate', updatePath)
+      document.removeEventListener('click', handleInternalLink, true)
+    }
+  }, [])
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) return
+
+    fetch(`${API_URL}/auth/me`, {
+      headers: { Authorization: ['Bearer', token].join(' ') },
+    })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => setIsAdmin(data?.user?.role === 'admin'))
+      .catch(() => setIsAdmin(false))
+  }, [])
+
+  function withNavigation(page) {
+    return (
+      <>
+        <div className="app-navigation-shell">
+          <SiteNav activePath={pathname} />
+        </div>
+        {page}
+      </>
+    )
+  }
+
+  if (pathname === '/my-resumes') {
+    return withNavigation(<MyResumes />)
+  }
+
+  if (pathname === '/profile') {
+    return withNavigation(<Profile />)
+  }
+
+  if (pathname === '/resume-builder') {
+    return withNavigation(<MyResumes />)
+  }
+
+  if (pathname === '/resume-builder/new') {
+    return withNavigation(<ResumeBuilder mode="new" />)
+  }
+
+  if (pathname.startsWith('/resume-builder/')) {
+    return withNavigation(<ResumeBuilder mode="edit" resumeId={pathname.split('/')[2]} />)
+  }
+
+  if (pathname.startsWith('/resume-preview/')) {
+    return withNavigation(<ResumeBuilder mode="preview" resumeId={pathname.split('/')[2]} />)
+  }
+
+  if (pathname === '/jobs') {
+    return withNavigation(<Jobs />)
+  }
+
+  if (pathname.startsWith('/jobs/') && pathname.endsWith('/apply')) {
+    return withNavigation(<ApplicationForm jobId={pathname.split('/')[2]} />)
+  }
+
+  if (pathname === '/applications') {
+    return withNavigation(<Applications />)
+  }
+
+  if (pathname === '/job-matches') {
+    return withNavigation(<JobMatches />)
+  }
+
+  if (pathname === '/admin/jobs') {
+    return withNavigation(<AdminJobs />)
+  }
+
+  if (pathname === '/admin') {
+    return withNavigation(<AdminDashboard />)
+  }
+
+  if (pathname === '/admin/applications') {
+    return withNavigation(<AdminApplications />)
+  }
+
+  if (pathname === '/login' || pathname === '/register') {
+    return withNavigation(<Auth />)
+  }
+
+  return withNavigation(
+    <main className="app-shell home-shell">
+
+      <section className="home-hero" id="home">
+        <div className="hero-section">
+          <p className="home-badge">✦ Powered by AI</p>
+          {isAdmin ? (
+            <>
+              <h1>Manage CareerPilot <span>AI.</span></h1>
+              <p className="intro">Manage jobs, applications, and platform activity from one place.</p>
+              <div className="hero-actions"><a className="primary-button" href="/admin">Go to Admin Dashboard</a></div>
+            </>
+          ) : (
+            <>
+              <h1>Build Your Career<br />with <span>Confidence.</span></h1>
+              <p className="intro">Create professional resumes, discover the right jobs,<br className="hero-desktop-break" /> get AI-powered insights, and land your dream career — all in one place.</p>
+              <div className="hero-actions"><a className="primary-button" href="/resume-builder/new">Create My Resume →</a><a className="secondary-button" href="/jobs">Explore Jobs</a></div>
+            </>
+          )}
+        </div>
+        <div className="hero-visual">
+          <img src="/career-hero.png" alt="Career growth and AI insights" />
         </div>
       </section>
 
@@ -34,31 +154,24 @@ function App() {
         </div>
         <div className="feature-grid">
           <article className="feature-card" id="resume-builder">
-            <span className="feature-number">01</span>
-            <h2>AI Resume Builder</h2>
-            <p>
-              Create and manage a professional resume with education, skills,
-              projects and experience.
-            </p>
+            <div className="feature-card-top"><span className="feature-icon">✦</span><a href="/resume-builder/new" className="feature-arrow" aria-label="Create a professional resume">↗</a></div>
+            <h2>Create Professional Resumes</h2><p>Build modern, ATS-friendly resumes with AI assistance.</p>
           </article>
           <article className="feature-card" id="jobs">
-            <span className="feature-number">02</span>
-            <h2>AI Job Matching</h2>
-            <p>
-              Compare your resume with job descriptions and receive an
-              AI-powered match score and recommendations.
-            </p>
+            <div className="feature-card-top"><span className="feature-icon">⌁</span><a href="/jobs" className="feature-arrow" aria-label="Find relevant jobs">↗</a></div>
+            <h2>Find Relevant Jobs</h2><p>Discover job opportunities that match your skills and interests.</p>
           </article>
           <article className="feature-card" id="applications">
-            <span className="feature-number">03</span>
-            <h2>Application Tracker</h2>
-            <p>
-              Apply for jobs and track the status of your applications.
-            </p>
+            <div className="feature-card-top"><span className="feature-icon">◈</span><a href="/job-matches" className="feature-arrow" aria-label="Get AI-powered insights">↗</a></div>
+            <h2>Get AI-Powered Insights</h2><p>Receive personalized recommendations to improve your chances.</p>
+          </article>
+          <article className="feature-card" id="goals">
+            <div className="feature-card-top"><span className="feature-icon">↗</span><a href="/applications" className="feature-arrow" aria-label="Track progress toward career goals">↗</a></div>
+            <h2>Achieve Your Goals</h2><p>Track your progress and take steps toward a brighter future.</p>
           </article>
         </div>
       </section>
-    </main>
+    </main>,
   )
 }
 
