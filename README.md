@@ -54,7 +54,8 @@ Create `server/.env`:
 MONGODB_URI=your_mongodb_connection_string
 JWT_SECRET=your_jwt_secret
 OPENAI_API_KEY=your_openai_api_key
-CLIENT_URL=http://localhost:5174
+# Comma-separated frontend origins are supported.
+CLIENT_URL=http://localhost:5174,https://careerpilot-ai-n5f2gn27-pavanesh-prabhu-v-s-projects.vercel.app
 PORT=5000
 ```
 
